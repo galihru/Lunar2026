@@ -1,4 +1,3 @@
-# GitHub Actions Scala 持续集成工作流
 name: Scala CI
 
 on:
@@ -12,7 +11,6 @@ permissions:
 
 jobs:
   build:
-    # 使用最新的 Ubuntu 环境
     runs-on: ubuntu-latest
 
     steps:
@@ -24,18 +22,18 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        # 注意：如果有 build.sbt，这里可以保留缓存
         cache: 'sbt'
 
-    - name: 安装 GUI 运行环境依赖
-      # Ubuntu Server 默认没有图形库，运行 Swing/AWT 需要安装这些
+    # 核心修正：添加 sbt 安装步骤
+    - name: 安装 sbt
+      uses: sbt/setup-sbt@v1
+
+    - name: 安装 GUI 依赖 (Xvfb)
       run: |
         sudo apt-get update
         sudo apt-get install -y libxrender1 libxtst6 libxi6 xvfb
 
-    - name: 执行编译与测试 (使用虚拟显示器)
-      # xvfb-run 用于模拟显示器，防止 java.awt.HeadlessException 报错
+    - name: 编译与测试
+      # 现在 sbt 已经安装，xvfb-run 可以正常调用它了
       run: xvfb-run sbt compile test
-
-    - name: 上传依赖图谱
-      # 帮助 GitHub 检测项目依赖安全性
-      uses: scalacenter/sbt-dependency-submission@v2
